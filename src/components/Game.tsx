@@ -1,9 +1,10 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Phaser from "phaser";
 import "./Game.css";
 
 const PhaserGame: React.FC = () => {
   const gameContainer = useRef<HTMLDivElement>(null);
+  const [game, setGame] = useState<Phaser.Game | null>(null);
 
   useEffect(() => {
     if (!gameContainer.current) return;
@@ -12,11 +13,9 @@ const PhaserGame: React.FC = () => {
       type: Phaser.AUTO,
       parent: gameContainer.current,
       scale: {
-        mode: Phaser.Scale.FIT,
+        mode: Phaser.Scale.RESIZE, // Dynamically fits screen
         autoCenter: Phaser.Scale.CENTER_BOTH,
       },
-      width: 720,
-      height: 1280,
       physics: {
         default: "arcade",
         arcade: {
@@ -27,7 +26,8 @@ const PhaserGame: React.FC = () => {
       scene: { preload, create, update },
     };
 
-    const game = new Phaser.Game(config);
+    const newGame = new Phaser.Game(config);
+    setGame(newGame);
 
     function preload(this: Phaser.Scene) {
       this.load.image("sky", "assets/sky.png");
@@ -41,20 +41,21 @@ const PhaserGame: React.FC = () => {
     }
 
     function create(this: Phaser.Scene) {
-      this.add.image(360, 640, "sky").setScale(1.5);
+      // Fullscreen background
+      const bg = this.add.image(this.scale.width / 2, this.scale.height / 2, "sky");
+      bg.setDisplaySize(this.scale.width, this.scale.height);
 
       // Platforms
       const platforms = this.physics.add.staticGroup();
-      platforms.create(360, 1200, "ground").setScale(2).refreshBody();
-      platforms.create(500, 900, "ground");
-      platforms.create(100, 600, "ground");
-      platforms.create(650, 400, "ground");
+      platforms.create(360, this.scale.height - 50, "ground").setScale(2).refreshBody();
+      platforms.create(500, this.scale.height - 300, "ground");
+      platforms.create(100, this.scale.height - 500, "ground");
+      platforms.create(650, this.scale.height - 700, "ground");
 
-      // Player
-      const player = this.physics.add.sprite(100, 1000, "player");
+      // Player setup
+      const player = this.physics.add.sprite(100, this.scale.height - 150, "player");
       player.setBounce(0.2);
       player.setCollideWorldBounds(true);
-
       this.physics.add.collider(player, platforms);
       (this as any).player = player;
       (this as any).cursors = this.input.keyboard!.createCursorKeys();
@@ -78,6 +79,7 @@ const PhaserGame: React.FC = () => {
       this.physics.add.collider(enemies, platforms);
       this.physics.add.collider(player, enemies, hitEnemy, undefined, this);
 
+      // Score text
       let score = 0;
       const scoreText = this.add.text(16, 16, "Score: 0", { fontSize: "32px", color: "#fff" });
 
@@ -85,12 +87,37 @@ const PhaserGame: React.FC = () => {
         (star as Phaser.Physics.Arcade.Image).disableBody(true, true);
         score += 10;
         scoreText.setText("Score: " + score);
+
+        // Respawn stars when all collected
+        if (stars.countActive(true) === 0) {
+          stars.children.iterate((child) => {
+            (child as Phaser.Physics.Arcade.Image).enableBody(true, child.x, 0, true, true);
+          });
+        }
       }
 
       function hitEnemy(player: Phaser.GameObjects.GameObject) {
         (player as Phaser.Physics.Arcade.Sprite).setTint(0xff0000);
         (player as Phaser.Physics.Arcade.Sprite).setVelocity(0);
         this.physics.pause();
+        showRestartButton();
+      }
+
+      // Camera follows player
+      this.cameras.main.setBounds(0, 0, this.scale.width, this.scale.height);
+      this.physics.world.setBounds(0, 0, this.scale.width, this.scale.height);
+      this.cameras.main.startFollow(player, true, 0.05, 0.05);
+
+      // Restart Button (Hidden initially)
+      const restartButton = document.createElement("button");
+      restartButton.innerText = "Restart";
+      restartButton.className = "restart-button";
+      restartButton.style.display = "none";
+      document.body.appendChild(restartButton);
+      restartButton.onclick = () => window.location.reload();
+
+      function showRestartButton() {
+        restartButton.style.display = "block";
       }
     }
 
@@ -115,7 +142,7 @@ const PhaserGame: React.FC = () => {
     }
 
     return () => {
-      game.destroy(true);
+      newGame.destroy(true);
     };
   }, []);
 
