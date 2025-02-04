@@ -7,7 +7,7 @@ export interface ButtonStyle {
     height: string;
     borderRadius: string;
     fontSize: string;
-    position: 'absolute'; // Explicitly typing 'absolute'
+    position: 'absolute';
     transform: string;
   }
   
