@@ -141,5 +141,3 @@ Edit
 - **Code blocks** (` ```ts ... ``` `) for code snippets.
 - **Links** to Phaser.js and React for quick access.
 - **Clear sections** for each part of the game logic and customization options.
-
-This structure will make the README look clean and easy to follow
