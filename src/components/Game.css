@@ -5,22 +5,22 @@ html, body {
   background-color: #0c1445;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: center; 
   width: 100vw;
   height: 100vh;
 }
 
 .container {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: center; 
+  align-items: center; 
   width: 100vw;
   height: 100vh;
   position: relative;
 }
 
 .mobile-frame {
-  width: 360px;  /* Ensuring a mobile-friendly size */
+  width: 360px;  
   height: 640px;
   display: flex;
   justify-content: center;
@@ -36,8 +36,8 @@ html, body {
   width: 100%;
   height: 100%;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: center; 
+  align-items: center; 
 }
 
 .start-button {

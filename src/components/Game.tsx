@@ -1,10 +1,10 @@
+
 import React, { useEffect, useRef, useState } from "react";
 import Phaser from "phaser";
-import "./Game.css"; // Import the updated CSS file
+import "./Game.css";
 
 const PhaserGame: React.FC = () => {
   const gameContainer = useRef<HTMLDivElement>(null);
-  const [game, setGame] = useState<Phaser.Game | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
 
   const startGame = () => {
@@ -29,7 +29,10 @@ const PhaserGame: React.FC = () => {
       physics: {
         default: "arcade",
         arcade: {
-          gravity: { y: 800 },
+          gravity: {
+            y: 800,
+            x: 0
+          },
           debug: false,
         },
       },
@@ -37,7 +40,6 @@ const PhaserGame: React.FC = () => {
     };
 
     const newGame = new Phaser.Game(config);
-    setGame(newGame);
 
     function preload(this: Phaser.Scene) {
       this.load.image("sky", "assets/sky.png");
@@ -65,8 +67,29 @@ const PhaserGame: React.FC = () => {
       player.setBounce(0.2);
       player.setCollideWorldBounds(true);
       this.physics.add.collider(player, platforms);
-      (this as any).player = player;
+      (this as any).player = player; 
       (this as any).cursors = this.input.keyboard!.createCursorKeys();
+
+      // Define player animations
+      this.anims.create({
+        key: "left",
+        frames: this.anims.generateFrameNumbers("player", { start: 0, end: 3 }),
+        frameRate: 10,
+        repeat: -1,
+      });
+
+      this.anims.create({
+        key: "right",
+        frames: this.anims.generateFrameNumbers("player", { start: 5, end: 8 }),
+        frameRate: 10,
+        repeat: -1,
+      });
+
+      this.anims.create({
+        key: "turn",
+        frames: [{ key: "player", frame: 4 }],
+        frameRate: 20,
+      });
 
       const stars = this.physics.add.group({
         key: "star",
@@ -74,17 +97,21 @@ const PhaserGame: React.FC = () => {
         setXY: { x: width * 0.1, y: 0, stepX: width * 0.08 },
       });
 
-      stars.children.iterate((child) => {
-        (child as Phaser.Physics.Arcade.Image).setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+      //@ts-ignore
+      stars.children.iterate((child: Phaser.GameObjects.GameObject) => {
+        const star = child as Phaser.Physics.Arcade.Image;
+        star.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
       });
 
       this.physics.add.collider(stars, platforms);
+       //@ts-ignore
       this.physics.add.overlap(player, stars, collectStar, undefined, this);
 
       const enemies = this.physics.add.group();
       const enemy = enemies.create(width / 2, height / 2, "enemy");
       enemy.setBounce(1).setVelocityX(150).setCollideWorldBounds(true);
       this.physics.add.collider(enemies, platforms);
+       //@ts-ignore
       this.physics.add.collider(player, enemies, hitEnemy, undefined, this);
 
       let score = 0;
@@ -95,7 +122,9 @@ const PhaserGame: React.FC = () => {
         score += 10;
         scoreText.setText("Score: " + score);
         if (stars.countActive(true) === 0) {
-          stars.children.iterate((child) => {
+           //@ts-ignore
+          stars.children.iterate((child: Phaser.GameObjects.GameObject) => {
+             //@ts-ignore
             (child as Phaser.Physics.Arcade.Image).enableBody(true, child.x, 0, true, true);
           });
         }
@@ -104,6 +133,7 @@ const PhaserGame: React.FC = () => {
       function hitEnemy(player: Phaser.GameObjects.GameObject) {
         (player as Phaser.Physics.Arcade.Sprite).setTint(0xff0000);
         (player as Phaser.Physics.Arcade.Sprite).setVelocity(0);
+         //@ts-ignore
         this.physics.pause();
         showRestartButton();
       }
@@ -125,7 +155,7 @@ const PhaserGame: React.FC = () => {
     }
 
     function update(this: Phaser.Scene) {
-      const cursors = (this as any).cursors;
+      const cursors = (this as any).cursors as Phaser.Types.Input.Keyboard.CursorKeys;
       const player = (this as any).player as Phaser.Physics.Arcade.Sprite;
 
       if (cursors.left.isDown) {
